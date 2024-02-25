@@ -34,6 +34,7 @@ def transcribe_audio():
     return jsonify({'error': 'File type not allowed'}), 400
 
 
-if __name__ == "__main__":
-    app.run(debug=True, port=5500)
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5500))
+    app.run(debug=True, port=port)
 
