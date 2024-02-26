@@ -30,7 +30,7 @@ def transcribe_audio():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
-        model = whisper.load_model("base")
+        model = whisper.load_model("tiny")
         result = model.transcribe(filepath)
 
         os.remove(filepath)
