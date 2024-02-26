@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 import whisper
 import os
-from app import app
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
