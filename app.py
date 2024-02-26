@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 import whisper
 import os
+from app import app
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -34,7 +35,7 @@ def transcribe_audio():
     return jsonify({'error': 'File type not allowed'}), 400
 
 
+
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 5500))
-    app.run(debug=True, port=port)
+    app.run()
 
