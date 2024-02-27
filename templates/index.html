@@ -12,10 +12,6 @@
             line-height: 1.6;
             margin: 0;
         }
-        #loading-bar {
-            display: none; /* Hidden by default */
-            margin-top: 20px;
-        }
         h1 {
             color: #ffffff; /* White color for the text */
             text-align: center; /* Centers the text horizontally */
@@ -102,20 +98,24 @@
     </style>
 </head>
 <body>
-    <h1>Audio to Text Transcription</h1>
+    <h1>ATT (Audio to Text)</h1>
+    <p class="description">
+        You can upload MP3 or MP4 (audio or video) files to convert them to text. This service supports over 50 languages, making it versatile for a wide range of transcription needs.
+    </p>
     <div class="file-upload">
-        <input type="file" id="file-upload" accept=".mp3, .mp4, .wav, .m4a, .flac">
+        <input type="file" id="file-upload" accept=".mp3, .mp4, .wav, .m4a, .flac" onchange="updateFileName()">
         <label for="file-upload">📎 Upload File</label>
         <span id="file-name">No file chosen</span>
     </div>
-    <button class="button" onclick="transcribeAudio()">Transcribe</button>
-    <div id="loading-bar">Transcribing...<br><img src="loading.gif" alt="Loading..."></div>
-    <div id="transcription-result">Your transcription will appear here...</div>
+    <button class="button" onclick="transcribeAudio()">Transcribe to Text</button>
+    <div id="loading-bar"></div>
+    <p id="transcription-result">Your transcription will appear here...</p>
+    <button id="download-btn" class="button" style="display: none;" onclick="downloadTranscription()">Download Transcription</button>
+
     <script>
         // JavaScript code here
         async function transcribeAudio() {
             const fileInput = document.getElementById('file-upload');
-            const loadingBar = document.getElementById('loading-bar');
             const transcriptionResult = document.getElementById('transcription-result');
         
             if (fileInput.files.length === 0) {
@@ -123,8 +123,10 @@
                 return;
             }
         
-            // Show loading bar
-            loadingBar.style.display = 'block';
+              // Show the loading bar
+              const loadingBar = document.getElementById('loading-bar');
+            loadingBar.style.display = 'inline-block'; // Make the loading bar visible
+            loadingBar.innerHTML = '<div class="loading-animation"></div>'; // Start the animation
         
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
@@ -152,19 +154,14 @@
             }
         }
         
-        function createDownloadLink(transcription) {
-            const link = document.createElement('a');
-            link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(transcription);
-            link.download = 'transcription.txt';
-            link.textContent = 'Download Transcription';
-            link.classList.add('button');
-        
-            const resultContainer = document.getElementById('transcription-result');
-            // Clear previous results or download links
-            while (resultContainer.firstChild) {
-                resultContainer.removeChild(resultContainer.firstChild);
-            }
-            resultContainer.appendChild(link);
+        function downloadTranscription() {
+            const transcriptionText = document.getElementById('transcription-result').textContent;
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(transcriptionText));
+            element.setAttribute('download', 'transcription.txt');
+            document.body.appendChild(element); // Append the element to the body
+            element.click(); // Programmatically click the element to trigger the download
+            document.body.removeChild(element); // Remove the element from the body
         }
         </script>
     
