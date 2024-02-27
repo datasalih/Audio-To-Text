@@ -107,53 +107,57 @@
         <label for="file-upload">📎 Upload File</label>
         <span id="file-name">No file chosen</span>
     </div>
-    <button class="button" onclick="transcribeAudio()">Transcribe to Text</button>
+    <button class="button" onclick="Transcribe()">Transcribe to Text</button>
     <div id="loading-bar"></div>
     <p id="transcription-result">Your transcription will appear here...</p>
     <button id="download-btn" class="button" style="display: none;" onclick="downloadTranscription()">Download Transcription</button>
 
     <script>
-        // JavaScript code here
-        async function transcribeAudio() {
+        function updateFileName() {
             const fileInput = document.getElementById('file-upload');
-            const transcriptionResult = document.getElementById('transcription-result');
-        
-            if (fileInput.files.length === 0) {
-                alert('Please select a file to transcribe.');
+            const fileNameDisplay = document.getElementById('file-name');
+            const fileName = fileInput.files.length > 0 ? fileInput.files[0].name : '';
+            fileNameDisplay.textContent = fileName; // Display the selected file name
+        }
+    
+        async function Transcribe() {
+            const fileInput = document.getElementById('file-upload');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file first.');
                 return;
             }
-        
-              // Show the loading bar
-              const loadingBar = document.getElementById('loading-bar');
+    
+            const formData = new FormData();
+            formData.append('file', file);
+    
+            // Show the loading bar
+            const loadingBar = document.getElementById('loading-bar');
             loadingBar.style.display = 'inline-block'; // Make the loading bar visible
             loadingBar.innerHTML = '<div class="loading-animation"></div>'; // Start the animation
-        
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-        
+    
             try {
                 const response = await fetch('/transcribe', {
                     method: 'POST',
                     body: formData,
                 });
-        
-                const result = await response.json();
-        
                 if (response.ok) {
-                    transcriptionResult.textContent = result.transcription;
-                    createDownloadLink(result.transcription);
+                    const result = await response.json();
+                    document.getElementById('transcription-result').textContent = result.transcription;
+                    // Show the download button
+                    document.getElementById('download-btn').style.display = 'inline-block';
                 } else {
-                    transcriptionResult.textContent = 'Failed to transcribe. Please try again.';
+                    document.getElementById('transcription-result').textContent = 'Failed to transcribe. Please try again.';
                 }
             } catch (error) {
                 console.error('Error:', error);
-                transcriptionResult.textContent = 'An error occurred during transcription.';
+                document.getElementById('transcription-result').textContent = 'An error occurred during transcription.';
             } finally {
-                // Hide loading bar regardless of the result
-                loadingBar.style.display = 'none';
+                // Hide the loading bar
+                loadingBar.style.display = 'none'; // Make the loading bar invisible again
             }
         }
-        
+    
         function downloadTranscription() {
             const transcriptionText = document.getElementById('transcription-result').textContent;
             const element = document.createElement('a');
@@ -163,7 +167,6 @@
             element.click(); // Programmatically click the element to trigger the download
             document.body.removeChild(element); // Remove the element from the body
         }
-        </script>
-    
+    </script>
 </body>
 </html>
