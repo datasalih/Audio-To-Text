@@ -12,6 +12,10 @@
             line-height: 1.6;
             margin: 0;
         }
+        #loading-bar {
+            display: none; /* Hidden by default */
+            margin-top: 20px;
+        }
         h1 {
             color: #ffffff; /* White color for the text */
             text-align: center; /* Centers the text horizontally */
@@ -105,53 +109,64 @@
         <span id="file-name">No file chosen</span>
     </div>
     <button class="button" onclick="transcribeAudio()">Transcribe</button>
+    <div id="loading-bar">Transcribing...<br><img src="loading.gif" alt="Loading..."></div>
     <div id="transcription-result">Your transcription will appear here...</div>
-
     <script>
-        function updateFileName() {
-            const fileInput = document.getElementById('file-upload');
-            const fileNameDisplay = document.getElementById('file-name');
-            fileNameDisplay.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : 'No file chosen';
-        }
-    
-        document.getElementById('file-upload').addEventListener('change', updateFileName);
-    
+        // JavaScript code here
         async function transcribeAudio() {
             const fileInput = document.getElementById('file-upload');
+            const loadingBar = document.getElementById('loading-bar');
+            const transcriptionResult = document.getElementById('transcription-result');
+        
             if (fileInput.files.length === 0) {
                 alert('Please select a file to transcribe.');
                 return;
             }
+        
+            // Show loading bar
+            loadingBar.style.display = 'block';
+        
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
+        
             try {
                 const response = await fetch('/transcribe', {
                     method: 'POST',
                     body: formData,
                 });
+        
+                const result = await response.json();
+        
                 if (response.ok) {
-                    const result = await response.json();
-                    document.getElementById('transcription-result').textContent = result.transcription;
+                    transcriptionResult.textContent = result.transcription;
                     createDownloadLink(result.transcription);
                 } else {
-                    document.getElementById('transcription-result').textContent = 'Failed to transcribe. Please try again.';
+                    transcriptionResult.textContent = 'Failed to transcribe. Please try again.';
                 }
             } catch (error) {
                 console.error('Error:', error);
-                document.getElementById('transcription-result').textContent = 'An error occurred during transcription.';
+                transcriptionResult.textContent = 'An error occurred during transcription.';
+            } finally {
+                // Hide loading bar regardless of the result
+                loadingBar.style.display = 'none';
             }
         }
-    
-        function createDownloadLink(transcriptionText) {
-            const downloadButton = document.createElement('a');
-            downloadButton.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(transcriptionText);
-            downloadButton.download = 'transcription.txt';
-            downloadButton.textContent = 'Download Transcription';
-            downloadButton.className = 'button';
+        
+        function createDownloadLink(transcription) {
+            const link = document.createElement('a');
+            link.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(transcription);
+            link.download = 'transcription.txt';
+            link.textContent = 'Download Transcription';
+            link.classList.add('button');
+        
             const resultContainer = document.getElementById('transcription-result');
-            resultContainer.appendChild(downloadButton);
+            // Clear previous results or download links
+            while (resultContainer.firstChild) {
+                resultContainer.removeChild(resultContainer.firstChild);
+            }
+            resultContainer.appendChild(link);
         }
-    </script>
+        </script>
     
 </body>
 </html>
