@@ -1,57 +1,67 @@
-from flask import Flask, request, render_template, jsonify
-from google.cloud import speech
-from google.cloud.speech import enums
-from google.cloud.speech import types
+from flask import Flask, request, jsonify, render_template
 from werkzeug.utils import secure_filename
+from google.cloud import speech
+from google.oauth2 import service_account
 import os
 
-app = Flask(__name__)
+# Path to the service account file (not using environment variable here)
+client_file = 'audio-to-text-415611-5f6954a6802b.json'
+credentials = service_account.Credentials.from_service_account_file(client_file)
 
-# Configure this environment variable with your Google credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "audio-to-text-415611-5f6954a6802b.json"
+app = Flask(__name__)
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'mp3', 'mp4', 'wav', 'm4a', 'flac'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/transcribe', methods=['POST'])
-def transcribe():
+def transcribe_audio():
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
+
     file = request.files['file']
+
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
+
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file_path = os.path.join('uploads', filename)
-        file.save(file_path)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
 
-        # Transcribe the audio file
-        transcription = transcribe_audio(file_path)
-        os.remove(file_path)  # Clean up the uploaded file
-        return jsonify({'transcription': transcription})
+        try:
+            # Instantiates a client with the service account file
+            client = speech.SpeechClient(credentials=credentials)
 
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in {'mp3', 'wav', 'flac'}
+            # Loads the audio into memory
+            with open(filepath, "rb") as audio_file:
+                content = audio_file.read()
+            audio = speech.RecognitionAudio(content=content)
 
-def transcribe_audio(file_path):
-    client = speech.SpeechClient()
-    with open(file_path, 'rb') as audio_file:
-        content = audio_file.read()
-    audio = types.RecognitionAudio(content=content)
-    config = types.RecognitionConfig(
-        encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
-        sample_rate_hertz=16000,
-        language_code='en-US')
+            config = speech.RecognitionConfig(
+                encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+                sample_rate_hertz=16000,
+                language_code="en-US",
+            )
 
-    response = client.recognize(config=config, audio=audio)
+            # Detects speech in the audio file
+            response = client.recognize(config=config, audio=audio)
 
-    transcription = ''
-    for result in response.results:
-        transcription += result.alternatives[0].transcript + ' '
+            transcript = " ".join([result.alternatives[0].transcript for result in response.results])
 
-    return transcription.strip()
+            return jsonify({'transcription': transcript})
+        finally:
+            os.remove(filepath)  
+    else:
+        return jsonify({'error': 'File type not allowed'}), 400
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run()

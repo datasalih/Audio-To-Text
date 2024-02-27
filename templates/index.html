@@ -113,12 +113,12 @@
             const fileNameDisplay = document.getElementById('file-name');
             fileNameDisplay.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : 'No file chosen';
         }
-
+    
         document.getElementById('file-upload').addEventListener('change', updateFileName);
-
+    
         async function transcribeAudio() {
             const fileInput = document.getElementById('file-upload');
-            if(fileInput.files.length === 0) {
+            if (fileInput.files.length === 0) {
                 alert('Please select a file to transcribe.');
                 return;
             }
@@ -132,6 +132,7 @@
                 if (response.ok) {
                     const result = await response.json();
                     document.getElementById('transcription-result').textContent = result.transcription;
+                    createDownloadLink(result.transcription);
                 } else {
                     document.getElementById('transcription-result').textContent = 'Failed to transcribe. Please try again.';
                 }
@@ -140,6 +141,17 @@
                 document.getElementById('transcription-result').textContent = 'An error occurred during transcription.';
             }
         }
+    
+        function createDownloadLink(transcriptionText) {
+            const downloadButton = document.createElement('a');
+            downloadButton.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(transcriptionText);
+            downloadButton.download = 'transcription.txt';
+            downloadButton.textContent = 'Download Transcription';
+            downloadButton.className = 'button';
+            const resultContainer = document.getElementById('transcription-result');
+            resultContainer.appendChild(downloadButton);
+        }
     </script>
+    
 </body>
 </html>
