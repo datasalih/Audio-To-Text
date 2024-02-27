@@ -5,7 +5,7 @@ from google.oauth2 import service_account
 import os
 
 # Path to the service account file (not using environment variable here)
-client_file = 'audio-to-text-415611-5f6954a6802b'
+client_file = 'audio-to-text-415611-5f6954a6802b.json'
 credentials = service_account.Credentials.from_service_account_file(client_file)
 
 app = Flask(__name__)
