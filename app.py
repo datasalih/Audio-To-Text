@@ -1,12 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from werkzeug.utils import secure_filename
-from google.cloud import speech
-from google.oauth2 import service_account
+import whisper
 import os
-
-# Path to the service account file (not using environment variable here)
-client_file = 'audio-to-text-415611-5f6954a6802b.json'
-credentials = service_account.Credentials.from_service_account_file(client_file)
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -38,30 +33,15 @@ def transcribe_audio():
         file.save(filepath)
 
         try:
-            # Instantiates a client with the service account file
-            client = speech.SpeechClient(credentials=credentials)
-
-            # Loads the audio into memory
-            with open(filepath, "rb") as audio_file:
-                content = audio_file.read()
-            audio = speech.RecognitionAudio(content=content)
-
-            config = speech.RecognitionConfig(
-                encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-                sample_rate_hertz=16000,
-                language_code="en-US",
-            )
-
-            # Detects speech in the audio file
-            response = client.recognize(config=config, audio=audio)
-
-            transcript = " ".join([result.alternatives[0].transcript for result in response.results])
-
-            return jsonify({'transcription': transcript})
+            model = whisper.load_model("tiny.en")  # Load model only when needed
+            result = model.transcribe(filepath)
+            return jsonify({'transcription': result['text']})
         finally:
             os.remove(filepath)  
     else:
         return jsonify({'error': 'File type not allowed'}), 400
 
+
 if __name__ == "__main__":
-    app.run()
+    app.run() 
+
