@@ -98,44 +98,32 @@
     </style>
 </head>
 <body>
-    <h1>ATT (Audio to Text)</h1>
-    <p class="description">
-        You can upload MP3 or MP4 (audio or video) files to convert them to text. This service supports over 50 languages, making it versatile for a wide range of transcription needs.
-    </p>
+    <h1>Audio to Text Transcription</h1>
     <div class="file-upload">
-        <input type="file" id="file-upload" accept=".mp3, .mp4, .wav, .m4a, .flac" onchange="updateFileName()">
+        <input type="file" id="file-upload" accept=".mp3, .mp4, .wav, .m4a, .flac">
         <label for="file-upload">📎 Upload File</label>
-        <span id="file-name"></span>
+        <span id="file-name">No file chosen</span>
     </div>
-    <button class="button" onclick="Transcribe()">Transcribe to Text</button>
-    <div id="loading-bar"></div>
-    <p id="transcription-result">Your transcription will appear here...</p>
-    <button id="download-btn" class="button" style="display: none;" onclick="downloadTranscription()">Download Transcription</button>
+    <button class="button" onclick="transcribeAudio()">Transcribe</button>
+    <div id="transcription-result">Your transcription will appear here...</div>
 
     <script>
         function updateFileName() {
             const fileInput = document.getElementById('file-upload');
             const fileNameDisplay = document.getElementById('file-name');
-            const fileName = fileInput.files.length > 0 ? fileInput.files[0].name : '';
-            fileNameDisplay.textContent = fileName; // Display the selected file name
+            fileNameDisplay.textContent = fileInput.files.length > 0 ? fileInput.files[0].name : 'No file chosen';
         }
-    
-        async function Transcribe() {
+
+        document.getElementById('file-upload').addEventListener('change', updateFileName);
+
+        async function transcribeAudio() {
             const fileInput = document.getElementById('file-upload');
-            const file = fileInput.files[0];
-            if (!file) {
-                alert('Please select a file first.');
+            if(fileInput.files.length === 0) {
+                alert('Please select a file to transcribe.');
                 return;
             }
-    
             const formData = new FormData();
-            formData.append('file', file);
-    
-            // Show the loading bar
-            const loadingBar = document.getElementById('loading-bar');
-            loadingBar.style.display = 'inline-block'; // Make the loading bar visible
-            loadingBar.innerHTML = '<div class="loading-animation"></div>'; // Start the animation
-    
+            formData.append('file', fileInput.files[0]);
             try {
                 const response = await fetch('/transcribe', {
                     method: 'POST',
@@ -144,28 +132,13 @@
                 if (response.ok) {
                     const result = await response.json();
                     document.getElementById('transcription-result').textContent = result.transcription;
-                    // Show the download button
-                    document.getElementById('download-btn').style.display = 'inline-block';
                 } else {
                     document.getElementById('transcription-result').textContent = 'Failed to transcribe. Please try again.';
                 }
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('transcription-result').textContent = 'An error occurred during transcription.';
-            } finally {
-                // Hide the loading bar
-                loadingBar.style.display = 'none'; // Make the loading bar invisible again
             }
-        }
-    
-        function downloadTranscription() {
-            const transcriptionText = document.getElementById('transcription-result').textContent;
-            const element = document.createElement('a');
-            element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(transcriptionText));
-            element.setAttribute('download', 'transcription.txt');
-            document.body.appendChild(element); // Append the element to the body
-            element.click(); // Programmatically click the element to trigger the download
-            document.body.removeChild(element); // Remove the element from the body
         }
     </script>
 </body>
