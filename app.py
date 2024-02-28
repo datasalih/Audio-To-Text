@@ -33,7 +33,7 @@ def transcribe_audio():
         file.save(filepath)
 
         try:
-            model = whisper.load_model("tiny.en")  # Load model only when needed
+            model = whisper.load_model("base")  # Load model only when needed
             result = model.transcribe(filepath)
             return jsonify({'transcription': result['text']})
         finally:
